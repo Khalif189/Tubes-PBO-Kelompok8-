@@ -1,144 +1,84 @@
 # Tugas Besar PBO — CleanHub
 
-**Repository name (format kampus):** `Tugas-Besar-<Kelas>-Kelompok_<noKel>`
+**Kelas IF-48-04 · Kelompok 8**
 
-Contoh: `Tugas-Besar-IT-23-Kelompok_3`
+| | |
+|---|---|
+| **Repository** | `Tugas-Besar-IF-48-04-Kelompok_8` |
+| **Topik** | Sistem Manajemen Laundry berbasis OOP (PBO) |
+| **Stack** | Java 17, MySQL, HTML/CSS/JS, REST API |
 
 ## Deskripsi
 
-**CleanHub** — Sistem Manajemen Laundry berbasis Pemrograman Berorientasi Objek (PBO).
+**CleanHub** — aplikasi manajemen laundry dengan konsep Pemrograman Berorientasi Objek.
 
-Topik mencakup implementasi konsep OOP (class, inheritance, polymorphism, encapsulation), manajemen user multi-role (Customer, Staff, Admin), transaksi pesanan laundry, integrasi MySQL, serta antarmuka web dan konsol.
+Fitur utama: login multi-role (Customer, Staff, Admin), registrasi user, buat & lacak pesanan, update status laundry, dashboard admin, integrasi MySQL, antarmuka web + konsol.
 
-## Anggota Kelompok
+## Anggota Kelompok 8
 
 | No | Nama | NIM | Kontribusi |
 |----|------|-----|------------|
 | 1  | *(isi)* | *(isi)* | *(isi)* |
 | 2  | *(isi)* | *(isi)* | *(isi)* |
 | 3  | *(isi)* | *(isi)* | *(isi)* |
-
-> Ganti tabel di atas sesuai data kelompok Anda.
+| 4  | *(isi)* | *(isi)* | *(isi)* |
 
 ## Struktur Project
 
 ```
-tubes pbo/
-├── README.md                 ← file ini
+Tugas-Besar-IF-48-04-Kelompok_8/
+├── README.md
 ├── .gitignore
-├── database/
-│   └── cleanhub.sql          ← script database MySQL
+├── database/cleanhub.sql
 ├── docs/
+│   ├── TUTORIAL_GITHUB.md      ← panduan GitHub lengkap
 │   ├── LAPORAN_ALUR_DETAIL.md
 │   └── LAPORAN_ALUR_RINGKAS.md
-├── web/                      ← frontend (HTML, CSS, JS)
-│   ├── index.html
-│   ├── css/app.css
-│   └── js/cleanhub-ui.js
-└── TubesTest/                ← backend Java (main project)
-    ├── run.bat               ← jalankan aplikasi
-    ├── pom.xml
-    └── src/main/java/com/mycompany/tubestest/
-        ├── TubesTest.java    ← entry point
-        ├── LaundryService.java
-        ├── LaundrySystem.java
-        ├── db/               ← JDBC repository
-        └── web/              ← REST API + web server
+├── web/                        ← frontend
+└── TubesTest/                  ← backend Java + run.bat
 ```
 
 ## Cara Menjalankan
 
-### Prasyarat
-
-- JDK 17+
-- XAMPP MySQL (aktif)
-- Import `database/cleanhub.sql` via phpMyAdmin
-
-### Konfigurasi database
-
 ```powershell
+# Import database/cleanhub.sql di phpMyAdmin (XAMPP MySQL ON)
+
 copy TubesTest\src\main\resources\database.properties.example TubesTest\src\main\resources\database.properties
-```
 
-Edit `database.properties` jika user/password MySQL berbeda.
-
-### Jalankan
-
-```powershell
 cd TubesTest
 .\run.bat
 ```
 
-Buka browser: **http://localhost:8080/**
+Browser: **http://localhost:8080/**
 
-Akun demo: `C-001` (Customer), `S-001` (Staff), `A-001` (Admin)
+Akun demo: `C-001` · `S-001` · `A-001`
 
-## Setup GitHub (sesuai Tutorial)
+## Push ke GitHub
 
-### 1. Buat repository di GitHub
-
-1. Login [github.com](https://github.com)
-2. **New repository**
-3. **Repository name:** `Tugas-Besar-<Kelas>-Kelompok_<noKel>`
-4. **Description:** Sistem Manajemen Laundry CleanHub — Tugas Besar PBO
-5. Centang **Add README** (opsional jika push dari lokal sudah ada README)
-6. Pilih template **.gitignore** (Java) — atau gunakan `.gitignore` di repo ini
-7. **Create repository**
-
-### 2. Hubungkan & push dari komputer lokal
-
-Ganti `USERNAME` dan `REPO` dengan akun dan nama repo Anda:
+Ganti `USERNAME` dengan username GitHub Anda:
 
 ```powershell
 cd "d:\apps\folder tugas\PBO\tubes pbo"
 
-git remote set-url origin https://github.com/USERNAME/REPO.git
+git remote set-url origin https://github.com/USERNAME/Tugas-Besar-IF-48-04-Kelompok_8.git
 git push -u origin main
 ```
 
-Contoh:
+## Clone (anggota lain)
 
 ```powershell
-git remote set-url origin https://github.com/johndoe/Tugas-Besar-IT-23-Kelompok_3.git
-git push -u origin main
+git clone https://github.com/USERNAME/Tugas-Besar-IF-48-04-Kelompok_8.git
 ```
 
-### 3. Clone (anggota lain)
-
-```powershell
-git clone https://github.com/USERNAME/REPO.git
-cd REPO
-```
-
-## Alur Kerja Git (Branch & Merge)
-
-Setiap fitur baru → buat branch terpisah:
+## Alur Kerja Git
 
 ```powershell
 git checkout -b feature_nama_fitur
-# ... edit code ...
 git add .
 git commit -m "Menambahkan fitur X"
 git push origin feature_nama_fitur
 ```
 
-Merge via **Pull Request** di web GitHub, atau lokal:
+Merge via **Pull Request** di GitHub.
 
-```powershell
-git checkout main
-git pull origin main
-git merge feature_nama_fitur
-git push origin main
-```
-
-### Contoh pembagian branch anggota
-
-| Anggota | Branch | Isi |
-|---------|--------|-----|
-| A | `feature_login_register` | Login & registrasi user |
-| B | `feature_order_tracking` | Pesanan & lacak status |
-| C | `feature_admin_dashboard` | Dashboard admin & laporan |
-
-## Dokumentasi
-
-Lihat folder [`docs/`](docs/) untuk laporan alur sistem lengkap dan ringkas.
+Panduan lengkap: [`docs/TUTORIAL_GITHUB.md`](docs/TUTORIAL_GITHUB.md)
