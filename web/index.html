@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CleanHub — Sistem Laundry</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script src="js/cleanhub-ui.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hidden { display: none !important; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="search"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--surface2);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea { min-height: 80px; resize: vertical; }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    button, .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, opacity .15s;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--surface2);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+
+    .user-table td, .order-table td {
+      vertical-align: middle;
+    }
+
+    .menu-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 18px;
+      background: var(--bg);
+      border: 1px solid var(--surface2);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .menu-btn:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .menu-btn small {
+      display: block;
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    .welcome {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+    }
+
+    .welcome strong { color: var(--accent); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--accent);
+      margin-left: 6px;
+    }
+
+    .badge.member { background: rgba(52, 211, 153, 0.2); color: var(--success); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      opacity: 0;
+      transition: transform .3s, opacity .3s;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+
+    .service-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .service-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--surface2);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .service-item:has(input:checked) {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .service-item input { width: auto; margin: 0; }
+
+    .service-item .price { margin-left: auto; color: var(--accent); font-weight: 600; }
+
+    .summary-box {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 14px 0;
+      font-size: 0.95rem;
+    }
+
+    .summary-box .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .summary-box .total {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--success);
+      border-top: 1px solid var(--surface2);
+      padding-top: 10px;
+      margin-top: 8px;
+    }
+
+    .order-table, .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .order-table th, .order-table td,
+    .user-table th, .user-table td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--surface2);
+    }
+
+    .order-table th, .user-table th {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: -8px;
+      margin-bottom: 14px;
+    }
+
+    .demo-ids {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--surface2);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .demo-ids code {
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--warn);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .checkbox-row input { width: auto; margin: 0; }
+    .checkbox-row label { margin: 0; color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Clean<span>Hub</span></h1>
+      <p>Sistem Manajemen Laundry — terhubung ke backend Java</p>
+      <p id="api-status" class="hint" style="margin-top:6px">Memeriksa server...</p>
+      <p class="hint"><a href="status.jsp" style="color:var(--accent)">Cek status via JSP</a> (butuh Jetty/Maven)</p>
+    </header>
+
+    <!-- Global Search (Staff & Admin) -->
+    <div id="global-search-bar" class="global-search hidden">
+      <div class="global-search-inner">
+        <span class="search-icon" aria-hidden="true">&#128269;</span>
+        <input type="search" id="global-search-input" placeholder="Cari ID pesanan, nama customer, status..." autocomplete="off">
+      </div>
+      <div id="global-search-results" class="search-results-panel hidden"></div>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="view-login" class="card">
+      <h2>Login CleanHub</h2>
+      <p class="hint">Masukkan ID user, atau gunakan tombol di bawah untuk daftar / keluar.</p>
+      <label for="login-input">ID User</label>
+      <input type="text" id="login-input" placeholder="Contoh: C-001" autocomplete="username">
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-login">Masuk</button>
+        <button type="button" class="btn-secondary" id="btn-go-register">Daftar (REG)</button>
+        <button type="button" class="btn-ghost" id="btn-exit">Keluar (EXIT)</button>
+      </div>
+      <div class="demo-ids">
+        <p class="login-users-title">Daftar akun terdaftar <span id="login-users-count" class="order-count-badge"></span></p>
+        <div id="login-users-loading" class="hint">Memuat daftar user...</div>
+        <div id="login-users-list" class="login-users-grid hidden"></div>
+        <p id="login-users-error" class="hint hidden" style="color:var(--danger)">Gagal memuat user. Pastikan server & MySQL aktif.</p>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="view-register" class="card hidden">
+      <h2>Daftar User Baru</h2>
+      <label for="reg-role">Role</label>
+      <select id="reg-role">
+        <option value="1">Customer</option>
+        <option value="2">Staff</option>
+        <option value="3">Admin</option>
+      </select>
+      <label for="reg-id">ID User</label>
+      <input type="text" id="reg-id" placeholder="Contoh: C-003, S-002">
+      <label for="reg-name">Nama</label>
+      <input type="text" id="reg-name" placeholder="Nama lengkap">
+      <div id="reg-member-wrap" class="checkbox-row">
+        <input type="checkbox" id="reg-member">
+        <label for="reg-member">Member laundry (diskon 10%)</label>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-register-submit">Daftar</button>
+        <button type="button" class="btn-ghost" id="btn-register-back">Kembali ke Login</button>
+      </div>
+    </section>
+
+    <!-- CUSTOMER DASHBOARD -->
+    <section id="view-customer" class="hidden">
+      <div class="card">
+        <div class="welcome" id="customer-welcome"></div>
+        <h2>Dashboard Customer</h2>
+        <div class="menu-grid">
+          <button type="button" class="menu-btn" data-action="create-order">
+            1. Buat Pesanan
+            <small>Pilih layanan & bayar</small>
+          </button>
+          <button type="button" class="menu-btn" data-action="check-order">
+            2. Cek Status Pesanan
+            <small>Lihat status berdasarkan ID</small>
+          </button>
+          <button type="button" class="menu-btn" data-action="add-complaint">
+            3. Tambah Keluhan
+            <small>Kirim keluhan untuk pesanan</small>
+          </button>
+        </div>
+        <div class="btn-row" style="margin-top:16px">
+          <button type="button" class="btn-ghost" id="btn-customer-logout">Logout</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CREATE ORDER -->
+    <section id="view-create-order" class="card hidden">
+      <h2>Buat Pesanan</h2>
+      <p class="hint">Pilih satu atau lebih layanan:</p>
+      <div class="service-list" id="service-list"></div>
+      <div class="summary-box hidden" id="order-summary">
+        <div class="row"><span>Sub-total</span><span id="subtotal">-</span></div>
+        <div class="row" id="discount-row" class="hidden"><span>Diskon member (10%)</span><span id="discount">-</span></div>
+        <div class="row total"><span>Total Bayar</span><span id="total">-</span></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-submit-order">Buat Pesanan</button>
+        <button type="button" class="btn-ghost" data-back="customer">Batal</button>
+      </div>
+    </section>
+
+    <!-- CHECK ORDER -->
+    <section id="view-check-order" class="card hidden">
+      <h2>Lacak Pesanan</h2>
+      <p class="hint">Pilih pesanan dari daftar untuk melihat progres laundry.</p>
+      <label for="check-order-id">Pilih Pesanan</label>
+      <select id="check-order-id">
+        <option value="">— Memuat daftar pesanan —</option>
+      </select>
+      <p id="check-order-empty" class="hint hidden">Anda belum memiliki pesanan. Buat pesanan terlebih dahulu dari dashboard.</p>
+      <div id="check-result" class="hidden"></div>
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-check-submit">Lacak Sekarang</button>
+        <button type="button" class="btn-ghost" data-back="customer">Kembali</button>
+      </div>
+    </section>
+
+    <!-- COMPLAINT -->
+    <section id="view-complaint" class="card hidden">
+      <h2>Tambah Keluhan</h2>
+      <label for="complaint-order-id">ID Pesanan</label>
+      <input type="text" id="complaint-order-id" placeholder="Contoh: ORD-991">
+      <label for="complaint-text">Keluhan</label>
+      <textarea id="complaint-text" placeholder="Tuliskan keluhan Anda..."></textarea>
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-complaint-submit">Simpan Keluhan</button>
+        <button type="button" class="btn-ghost" data-back="customer">Kembali</button>
+      </div>
+    </section>
+
+    <!-- STAFF DASHBOARD -->
+    <section id="view-staff" class="hidden">
+      <div class="card">
+        <div class="welcome" id="staff-welcome"></div>
+        <h2>Dashboard Staff <span id="staff-order-count" class="order-count-badge hidden"></span></h2>
+        <div id="staff-orders-wrap">
+          <p class="hint hidden" id="staff-empty">Belum ada pesanan masuk.</p>
+          <div id="staff-orders-table-wrap"></div>
+        </div>
+        <div class="btn-row" style="margin-top:16px">
+          <button type="button" class="btn-ghost" id="btn-staff-logout">Logout</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STAFF UPDATE STATUS MODAL (inline card) -->
+    <section id="view-staff-update" class="card hidden">
+      <h2>Update Status Pesanan</h2>
+      <p id="staff-update-order-id" class="hint"></p>
+      <label for="staff-new-status">Status Baru</label>
+      <select id="staff-new-status">
+        <option value="">— Pilih status —</option>
+        <option value="Menunggu Diproses">Menunggu Diproses</option>
+        <option value="Sedang Mencuci">Sedang Mencuci</option>
+        <option value="Sedang Setrika">Sedang Setrika</option>
+        <option value="Selesai">Selesai / Siap Diambil</option>
+        <option value="Dibatalkan">Dibatalkan</option>
+      </select>
+      <div class="btn-row">
+        <button type="button" class="btn-primary" id="btn-staff-update-submit">Simpan</button>
+        <button type="button" class="btn-ghost" id="btn-staff-update-cancel">Batal</button>
+      </div>
+    </section>
+
+    <!-- ADMIN DASHBOARD -->
+    <section id="view-admin" class="hidden">
+      <div class="card">
+        <div class="welcome" id="admin-welcome"></div>
+        <h2>Dashboard Admin</h2>
+        <h3 style="font-size:.95rem;color:var(--muted);margin-bottom:10px">Rekap User</h3>
+        <table class="user-table">
+          <thead><tr><th>ID</th><th>Nama</th><th>Role</th><th>Aksi</th></tr></thead>
+          <tbody id="admin-users-tbody"></tbody>
+        </table>
+        <h3 class="section-title">Rekap Laporan Transaksi <span id="admin-order-count" class="order-count-badge hidden"></span></h3>
+        <div class="admin-trans-actions">
+          <button type="button" class="btn-danger btn-sm hidden" id="btn-delete-all-orders">Hapus Semua Riwayat</button>
+        </div>
+        <p id="admin-no-trans" class="hint hidden">(Belum ada transaksi)</p>
+        <div id="admin-orders-table-wrap"></div>
+        <div class="btn-row" style="margin-top:16px">
+          <button type="button" class="btn-ghost" id="btn-admin-logout">Logout</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN EDIT USER MODAL -->
+    <div id="admin-edit-modal" class="modal-backdrop hidden" aria-hidden="true">
+      <div class="card modal-card" role="dialog" aria-labelledby="admin-edit-title">
+        <h2 id="admin-edit-title">Edit Admin</h2>
+        <p class="hint">Ubah ID dan nama akun admin.</p>
+        <input type="hidden" id="edit-admin-old-id">
+        <label for="edit-admin-new-id">ID Admin</label>
+        <input type="text" id="edit-admin-new-id" placeholder="Contoh: A-001">
+        <label for="edit-admin-name">Nama</label>
+        <input type="text" id="edit-admin-name" placeholder="Nama lengkap">
+        <div class="btn-row">
+          <button type="button" class="btn-primary" id="btn-edit-admin-save">Simpan</button>
+          <button type="button" class="btn-ghost" id="btn-edit-admin-cancel">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOODBYE -->
+    <section id="view-goodbye" class="card hidden">
+      <h2>Terima kasih</h2>
+      <p>Terima kasih telah menggunakan CleanHub.</p>
+      <div class="btn-row" style="margin-top:16px">
+        <button type="button" class="btn-primary" id="btn-restart">Buka Lagi</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    const API = "/api";
+    const DISCOUNT_RATE = 0.10;
+
+    let services = {};
+    let reports = [];
+    let currentUser = null;
+    let staffUpdatingOrderId = null;
+    let searchDebounce = null;
+    let editingAdminOldId = null;
+
+    function toggleGlobalSearch(show) {
+      const bar = document.getElementById("global-search-bar");
+      bar.classList.toggle("hidden", !show);
+      if (!show) {
+        document.getElementById("global-search-input").value = "";
+        document.getElementById("global-search-results").classList.add("hidden");
+      }
+    }
+
+    async function runGlobalSearch(term) {
+      const panel = document.getElementById("global-search-results");
+      if (!term || term.length < 2) {
+        panel.classList.add("hidden");
+        return;
+      }
+      try {
+        const data = await api("/search?q=" + encodeURIComponent(term));
+        const list = data.reports || [];
+        if (list.length === 0) {
+          panel.innerHTML = '<div class="empty-state" style="padding:16px">Tidak ada hasil untuk "' + CleanHubUI.escapeHtml(term) + '"</div>';
+        } else {
+          panel.innerHTML = list.map(r => `
+            <div class="search-hit" data-order-id="${CleanHubUI.escapeHtml(r.orderId)}">
+              <div>
+                <div class="search-hit-id">${CleanHubUI.escapeHtml(r.orderId)}</div>
+                <div class="search-hit-meta">${CleanHubUI.escapeHtml(r.customerName || "-")} · ${CleanHubUI.escapeHtml((r.services || []).join(", "))}</div>
+              </div>
+              ${CleanHubUI.statusBadge(r.status)}
+            </div>
+          `).join("");
+          panel.querySelectorAll(".search-hit").forEach(hit => {
+            hit.addEventListener("click", () => openOrderFromSearch(hit.dataset.orderId));
+          });
+        }
+        panel.classList.remove("hidden");
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    function openOrderFromSearch(orderId) {
+      document.getElementById("global-search-results").classList.add("hidden");
+      if (currentUser?.role === "Customer") {
+        openCheckOrder(orderId, true).catch(e => showToast(e.message, "error"));
+      } else if (currentUser?.role === "Staff") {
+        staffUpdatingOrderId = orderId;
+        document.getElementById("staff-update-order-id").textContent = "Pesanan: " + orderId;
+        document.getElementById("staff-new-status").value = "";
+        showView("view-staff-update");
+      } else {
+        showToast("Pesanan: " + orderId, "success");
+      }
+    }
+
+    document.getElementById("global-search-input").addEventListener("input", (e) => {
+      clearTimeout(searchDebounce);
+      const term = e.target.value.trim();
+      searchDebounce = setTimeout(() => runGlobalSearch(term), 280);
+    });
+
+    document.addEventListener("click", (e) => {
+      const bar = document.getElementById("global-search-bar");
+      if (!bar.contains(e.target)) {
+        document.getElementById("global-search-results").classList.add("hidden");
+      }
+    });
+
+    async function api(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || "Permintaan gagal");
+      }
+      return data;
+    }
+
+    async function checkServer() {
+      const el = document.getElementById("api-status");
+      try {
+        await api("/health");
+        el.textContent = "Terhubung ke Java + MySQL (cleanhub)";
+        el.style.color = "var(--success)";
+        loadLoginUserList();
+      } catch (_) {
+        el.textContent = "Server offline — jalankan run.bat";
+        el.style.color = "var(--danger)";
+        document.getElementById("login-users-loading").classList.add("hidden");
+        document.getElementById("login-users-error").classList.remove("hidden");
+      }
+    }
+
+    async function loadLoginUserList() {
+      const loading = document.getElementById("login-users-loading");
+      const listEl = document.getElementById("login-users-list");
+      const errEl = document.getElementById("login-users-error");
+      const countEl = document.getElementById("login-users-count");
+
+      try {
+        const data = await api("/users");
+        const users = data.users || [];
+        loading.classList.add("hidden");
+        errEl.classList.add("hidden");
+
+        if (users.length === 0) {
+          listEl.innerHTML = '<p class="hint">Belum ada user terdaftar.</p>';
+          listEl.classList.remove("hidden");
+          countEl.textContent = "0";
+          return;
+        }
+
+        countEl.textContent = String(users.length);
+
+        const groups = [
+          { role: "Admin", label: "Admin", icon: "&#128736;" },
+          { role: "Staff", label: "Staff", icon: "&#128188;" },
+          { role: "Customer", label: "Customer", icon: "&#128100;" }
+        ];
+
+        let html = "";
+        for (const g of groups) {
+          const groupUsers = users.filter(u => u.role === g.role);
+          if (groupUsers.length === 0) continue;
+          html += `<div class="login-user-group">
+            <h4 class="login-user-group-title">${g.icon} ${g.label} <span class="login-user-group-count">${groupUsers.length}</span></h4>
+            <div class="login-user-cards">`;
+          for (const u of groupUsers) {
+            const member = u.isMember ? '<span class="badge member">Member</span>' : "";
+            html += `<button type="button" class="login-user-card" data-id="${CleanHubUI.escapeHtml(u.id)}" title="Klik untuk login sebagai ${CleanHubUI.escapeHtml(u.id)}">
+              <span class="login-user-id">${CleanHubUI.escapeHtml(u.id)}</span>
+              <span class="login-user-name">${CleanHubUI.escapeHtml(u.name)}</span>
+              ${member}
+            </button>`;
+          }
+          html += `</div></div>`;
+        }
+
+        listEl.innerHTML = html;
+        listEl.classList.remove("hidden");
+
+        listEl.querySelectorAll(".login-user-card").forEach(btn => {
+          btn.addEventListener("click", () => {
+            document.getElementById("login-input").value = btn.dataset.id;
+            doLogin();
+          });
+        });
+      } catch (_) {
+        loading.classList.add("hidden");
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    async function loadServices() {
+      const data = await api("/services");
+      services = {};
+      (data.services || []).forEach(s => {
+        services[s.index] = { name: s.name, price: s.price };
+      });
+    }
+
+    async function loadReports() {
+      const data = await api("/orders");
+      reports = data.reports || [];
+    }
+
+    function formatRupiah(amount) {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+      }).format(amount);
+    }
+
+    function showToast(msg, type = "") {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = "toast show" + (type ? " " + type : "");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 3200);
+    }
+
+    const views = [
+      "view-login", "view-register", "view-customer", "view-create-order",
+      "view-check-order", "view-complaint", "view-staff", "view-staff-update",
+      "view-admin", "view-goodbye"
+    ];
+
+    function showView(id) {
+      views.forEach(v => document.getElementById(v).classList.toggle("hidden", v !== id));
+    }
+
+    function findReport(orderId) {
+      return reports.find(r =>
+        r.orderId.toLowerCase() === orderId.trim().toLowerCase()
+      );
+    }
+
+    function ordersForTracking() {
+      if (currentUser?.role === "Customer") {
+        const uid = currentUser.id.toUpperCase();
+        return reports.filter(r => (r.customerId || "").toUpperCase() === uid);
+      }
+      return reports;
+    }
+
+    function fillCheckOrderSelect(orders, selectedId) {
+      const select = document.getElementById("check-order-id");
+      const emptyHint = document.getElementById("check-order-empty");
+      const submitBtn = document.getElementById("btn-check-submit");
+
+      select.innerHTML = "";
+      if (orders.length === 0) {
+        select.disabled = true;
+        submitBtn.disabled = true;
+        emptyHint.classList.remove("hidden");
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "— Belum ada pesanan —";
+        select.appendChild(opt);
+        return;
+      }
+
+      select.disabled = false;
+      submitBtn.disabled = false;
+      emptyHint.classList.add("hidden");
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "— Pilih pesanan —";
+      select.appendChild(placeholder);
+
+      orders.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.orderId;
+        const svc = (r.services || []).slice(0, 2).join(", ");
+        const svcSuffix = svc ? (r.services.length > 2 ? svc + "…" : svc) : "";
+        opt.textContent = `${r.orderId} · ${r.status}${svcSuffix ? " · " + svcSuffix : ""}`;
+        select.appendChild(opt);
+      });
+
+      if (selectedId && orders.some(r => r.orderId === selectedId)) {
+        select.value = selectedId;
+      } else {
+        select.value = "";
+      }
+    }
+
+    async function openCheckOrder(selectedId, autoTrack = false) {
+      await loadReports();
+      fillCheckOrderSelect(ordersForTracking(), selectedId || "");
+      document.getElementById("check-result").classList.add("hidden");
+      showView("view-check-order");
+      if (autoTrack && selectedId) {
+        document.getElementById("btn-check-submit").click();
+      }
+    }
+
+    async function trackSelectedOrder() {
+      const orderId = document.getElementById("check-order-id").value.trim();
+      const box = document.getElementById("check-result");
+      if (!orderId) {
+        showToast("Pilih pesanan terlebih dahulu.", "error");
+        box.classList.add("hidden");
+        return;
+      }
+      try {
+        const data = await api("/orders/check", {
+          method: "POST",
+          body: JSON.stringify({ orderId })
+        });
+        const r = data.report;
+        box.innerHTML = CleanHubUI.renderTrackingCard(r);
+        box.classList.remove("hidden");
+      } catch (e) {
+        showToast(e.message, "error");
+        box.classList.add("hidden");
+      }
+    }
+
+    function applyMembershipDiscount(customer, subtotal) {
+      if (customer.isMember) {
+        return {
+          final: subtotal - subtotal * DISCOUNT_RATE,
+          discounted: true,
+          discountAmount: subtotal * DISCOUNT_RATE
+        };
+      }
+      return { final: subtotal, discounted: false, discountAmount: 0 };
+    }
+
+    // --- LOGIN ---
+    document.getElementById("btn-login").addEventListener("click", doLogin);
+    document.getElementById("login-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    async function doLogin() {
+      const input = document.getElementById("login-input").value.trim();
+      if (!input) {
+        showToast("Masukkan ID user.", "error");
+        return;
+      }
+      try {
+        const data = await api("/login", {
+          method: "POST",
+          body: JSON.stringify({ id: input.toUpperCase() })
+        });
+        currentUser = data.user;
+        document.getElementById("login-input").value = "";
+        await loadReports();
+        routeByRole(currentUser);
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    function routeByRole(user) {
+      toggleGlobalSearch(user.role === "Staff" || user.role === "Admin");
+      if (user.role === "Customer") {
+        const w = document.getElementById("customer-welcome");
+        w.innerHTML = `Halo, <strong>${user.name}</strong>! (Role: Customer)` +
+          (user.isMember ? ' <span class="badge member">Member</span>' : "");
+        showView("view-customer");
+      } else if (user.role === "Staff") {
+        document.getElementById("staff-welcome").innerHTML =
+          `Halo, <strong>${user.name}</strong>! (Role: Staff)`;
+        renderStaffOrders().catch(e => showToast(e.message, "error"));
+        showView("view-staff");
+      } else if (user.role === "Admin") {
+        document.getElementById("admin-welcome").innerHTML =
+          `Halo, <strong>${user.name}</strong>! (Role: Admin)`;
+        renderAdminDashboard().catch(e => showToast(e.message, "error"));
+        showView("view-admin");
+      }
+    }
+
+    document.getElementById("btn-go-register").addEventListener("click", () => {
+      showView("view-register");
+    });
+
+    document.getElementById("btn-register-back").addEventListener("click", () => {
+      showView("view-login");
+    });
+
+    document.getElementById("reg-role").addEventListener("change", () => {
+      document.getElementById("reg-member-wrap").classList.toggle(
+        "hidden", document.getElementById("reg-role").value !== "1"
+      );
+    });
+
+    document.getElementById("btn-register-submit").addEventListener("click", async () => {
+      const roleChoice = document.getElementById("reg-role").value;
+      const idRaw = document.getElementById("reg-id").value.trim();
+      const name = document.getElementById("reg-name").value.trim();
+      const isMember = document.getElementById("reg-member").checked;
+
+      if (!idRaw || !name) {
+        showToast("[System] ID dan nama wajib diisi.", "error");
+        return;
+      }
+
+      try {
+        const roles = { "1": "Customer", "2": "Staff", "3": "Admin" };
+        await api("/register", {
+          method: "POST",
+          body: JSON.stringify({
+            roleChoice,
+            role: roles[roleChoice] || "Customer",
+            id: idRaw.toUpperCase(),
+            name,
+            isMember
+          })
+        });
+        showToast(`Registrasi ${name} tersimpan di database.`, "success");
+        document.getElementById("reg-id").value = "";
+        document.getElementById("reg-name").value = "";
+        document.getElementById("reg-member").checked = false;
+        loadLoginUserList();
+        showView("view-login");
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    });
+
+    document.getElementById("btn-exit").addEventListener("click", () => {
+      currentUser = null;
+      showView("view-goodbye");
+    });
+
+    document.getElementById("btn-restart").addEventListener("click", () => {
+      showView("view-login");
+    });
+
+    function logout() {
+      currentUser = null;
+      toggleGlobalSearch(false);
+      loadLoginUserList();
+      showView("view-login");
+    }
+
+    document.getElementById("btn-customer-logout").addEventListener("click", logout);
+    document.getElementById("btn-staff-logout").addEventListener("click", logout);
+    document.getElementById("btn-admin-logout").addEventListener("click", logout);
+
+    // --- CUSTOMER ACTIONS ---
+    document.querySelectorAll("#view-customer .menu-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.action;
+        if (action === "create-order") openCreateOrder().catch(e => showToast(e.message, "error"));
+        else if (action === "check-order") {
+          openCheckOrder().catch(e => showToast(e.message, "error"));
+        } else if (action === "add-complaint") {
+          document.getElementById("complaint-order-id").value = "";
+          document.getElementById("complaint-text").value = "";
+          showView("view-complaint");
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-back='customer']").forEach(btn => {
+      btn.addEventListener("click", () => showView("view-customer"));
+    });
+
+    async function openCreateOrder() {
+      await loadServices();
+      const list = document.getElementById("service-list");
+      list.innerHTML = "";
+      Object.entries(services).forEach(([key, svc]) => {
+        const label = document.createElement("label");
+        label.className = "service-item";
+        label.innerHTML = `
+          <input type="checkbox" value="${key}" class="svc-check">
+          <span>${key}. ${svc.name}</span>
+          <span class="price">${formatRupiah(svc.price)}</span>
+        `;
+        list.appendChild(label);
+      });
+      document.getElementById("order-summary").classList.add("hidden");
+      list.querySelectorAll(".svc-check").forEach(cb => {
+        cb.addEventListener("change", updateOrderPreview);
+      });
+      showView("view-create-order");
+    }
+
+    function updateOrderPreview() {
+      const checked = [...document.querySelectorAll(".svc-check:checked")];
+      const summary = document.getElementById("order-summary");
+      if (checked.length === 0) {
+        summary.classList.add("hidden");
+        return;
+      }
+      let subtotal = 0;
+      checked.forEach(cb => {
+        subtotal += services[cb.value].price;
+      });
+      const { final, discounted, discountAmount } =
+        applyMembershipDiscount(currentUser, subtotal);
+
+      document.getElementById("subtotal").textContent = formatRupiah(subtotal);
+      document.getElementById("discount-row").classList.toggle("hidden", !discounted);
+      document.getElementById("discount").textContent = "-" + formatRupiah(discountAmount);
+      document.getElementById("total").textContent = formatRupiah(final);
+      summary.classList.remove("hidden");
+    }
+
+    document.getElementById("btn-submit-order").addEventListener("click", async () => {
+      const checked = [...document.querySelectorAll(".svc-check:checked")];
+      if (checked.length === 0) {
+        showToast("Tidak ada layanan valid yang dipilih. Pesanan dibatalkan.", "error");
+        return;
+      }
+
+      const indexes = checked.map(cb => Number(cb.value));
+      try {
+        const data = await api("/orders", {
+          method: "POST",
+          body: JSON.stringify({
+            customerId: currentUser.id,
+            serviceIndexes: indexes
+          })
+        });
+        await loadReports();
+        let msg = `Pesanan ${data.orderId} berhasil. Status: ${data.status}.`;
+        if (data.discounted) msg += " (Diskon member 10%)";
+        showToast(msg, "success");
+        showView("view-customer");
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    });
+
+    document.getElementById("btn-check-submit").addEventListener("click", trackSelectedOrder);
+    document.getElementById("check-order-id").addEventListener("change", () => {
+      const orderId = document.getElementById("check-order-id").value;
+      if (orderId) trackSelectedOrder();
+      else document.getElementById("check-result").classList.add("hidden");
+    });
+
+    document.getElementById("btn-complaint-submit").addEventListener("click", async () => {
+      const orderId = document.getElementById("complaint-order-id").value.trim();
+      const text = document.getElementById("complaint-text").value.trim();
+      if (!text) {
+        showToast("Keluhan tidak boleh kosong.", "error");
+        return;
+      }
+      try {
+        await api("/orders/complaint", {
+          method: "POST",
+          body: JSON.stringify({ orderId, complaint: text })
+        });
+        await loadReports();
+        showToast("[System] Keluhan berhasil disimpan.", "success");
+        showView("view-customer");
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    });
+
+    // --- STAFF ---
+    async function renderStaffOrders(filtered) {
+      if (!filtered) await loadReports();
+      const list = filtered || reports;
+      const empty = document.getElementById("staff-empty");
+      const wrap = document.getElementById("staff-orders-table-wrap");
+      const countEl = document.getElementById("staff-order-count");
+
+      if (list.length === 0) {
+        empty.classList.remove("hidden");
+        wrap.innerHTML = "";
+        countEl.classList.add("hidden");
+        return;
+      }
+
+      empty.classList.add("hidden");
+      countEl.textContent = list.length + " pesanan";
+      countEl.classList.remove("hidden");
+      wrap.innerHTML = CleanHubUI.renderOrderTable({
+        orders: list,
+        role: "staff",
+        onUpdate: (id) => {
+          staffUpdatingOrderId = id;
+          document.getElementById("staff-update-order-id").textContent = "Pesanan: " + id;
+          document.getElementById("staff-new-status").value = "";
+          showView("view-staff-update");
+        },
+        onTrack: (id) => {
+          openCheckOrder(id, true).catch(e => showToast(e.message, "error"));
+        }
+      });
+      CleanHubUI.bindOrderTable(wrap, {
+        onUpdate: (id) => {
+          staffUpdatingOrderId = id;
+          document.getElementById("staff-update-order-id").textContent = "Pesanan: " + id;
+          showView("view-staff-update");
+        },
+        onTrack: (id) => {
+          openCheckOrder(id, true).catch(e => showToast(e.message, "error"));
+        }
+      });
+    }
+
+    document.getElementById("btn-staff-update-submit").addEventListener("click", async () => {
+      const newStatus = document.getElementById("staff-new-status").value.trim();
+      if (!newStatus) {
+        showToast("Status tidak boleh kosong.", "error");
+        return;
+      }
+      try {
+        await api("/orders/status", {
+          method: "POST",
+          body: JSON.stringify({ orderId: staffUpdatingOrderId, status: newStatus })
+        });
+        showToast(`Status ${staffUpdatingOrderId} diubah menjadi: ${newStatus}.`, "success");
+        staffUpdatingOrderId = null;
+        await renderStaffOrders();
+        showView("view-staff");
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    });
+
+    document.getElementById("btn-staff-update-cancel").addEventListener("click", () => {
+      showView("view-staff");
+    });
+
+    // --- ADMIN ---
+    function openEditAdminModal(user) {
+      editingAdminOldId = user.id;
+      document.getElementById("edit-admin-old-id").value = user.id;
+      document.getElementById("edit-admin-new-id").value = user.id;
+      document.getElementById("edit-admin-name").value = user.name;
+      document.getElementById("admin-edit-modal").classList.remove("hidden");
+    }
+
+    function closeEditAdminModal() {
+      editingAdminOldId = null;
+      document.getElementById("admin-edit-modal").classList.add("hidden");
+    }
+
+    async function saveEditAdmin() {
+      const oldId = (document.getElementById("edit-admin-old-id").value || editingAdminOldId || "").trim();
+      const newId = document.getElementById("edit-admin-new-id").value.trim();
+      const name = document.getElementById("edit-admin-name").value.trim();
+      if (!newId || !name) {
+        showToast("ID dan nama admin wajib diisi.", "error");
+        return;
+      }
+      try {
+        const data = await api("/edit-user", {
+          method: "POST",
+          body: JSON.stringify({ oldId, newId, name })
+        });
+        if (currentUser && oldId.toUpperCase() === currentUser.id.toUpperCase() && data.user) {
+          currentUser = data.user;
+          document.getElementById("admin-welcome").textContent =
+            `Selamat datang, ${currentUser.name} (${currentUser.id}) — Admin`;
+        }
+        showToast(data.message || "Data admin diperbarui.", "success");
+        closeEditAdminModal();
+        loadLoginUserList();
+        await renderAdminDashboard();
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm(`Hapus user ${userId}?`)) return;
+      try {
+        await api("/delete-user", {
+          method: "POST",
+          body: JSON.stringify({ id: userId, currentAdminId: currentUser?.id || "" })
+        });
+        showToast(`User ${userId} dihapus.`, "success");
+        await renderAdminDashboard();
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    async function deleteOrder(orderId) {
+      if (!confirm(`Hapus riwayat transaksi ${orderId}?`)) return;
+      try {
+        await api("/delete-order", {
+          method: "POST",
+          body: JSON.stringify({ orderId })
+        });
+        showToast(`Riwayat transaksi ${orderId} dihapus.`, "success");
+        await renderAdminDashboard();
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    async function deleteAllOrders() {
+      if (reports.length === 0) {
+        showToast("Tidak ada riwayat transaksi.", "error");
+        return;
+      }
+      if (!confirm(`Hapus SEMUA riwayat transaksi (${reports.length})?\n\nTindakan ini tidak dapat dibatalkan.`)) return;
+      try {
+        const data = await api("/delete-all-orders", { method: "POST", body: "{}" });
+        showToast(data.message || "Semua riwayat transaksi dihapus.", "success");
+        await renderAdminDashboard();
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    async function renderAdminDashboard() {
+      const usersData = await api("/admin/users");
+      const usersTbody = document.getElementById("admin-users-tbody");
+      usersTbody.innerHTML = (usersData.users || []).map(u => {
+        const isSelf = currentUser && u.id === currentUser.id;
+        const editBtn = u.role === "Admin"
+          ? `<button type="button" class="btn-secondary btn-sm btn-edit-admin"
+              data-id="${CleanHubUI.escapeHtml(u.id)}"
+              data-name="${CleanHubUI.escapeHtml(u.name)}">Edit</button>`
+          : "";
+        return `
+        <tr>
+          <td>${CleanHubUI.escapeHtml(u.id)}</td>
+          <td>${CleanHubUI.escapeHtml(u.name)}</td>
+          <td>${CleanHubUI.escapeHtml(u.role)}${u.isMember ? ' <span class="badge member">Member</span>' : ""}</td>
+          <td class="cell-actions">
+            ${editBtn}
+            <button type="button" class="btn-danger btn-sm btn-del-user" data-id="${CleanHubUI.escapeHtml(u.id)}"
+              ${isSelf ? "disabled title=\"Akun sedang login\"" : ""}>
+              Hapus
+            </button>
+          </td>
+        </tr>`;
+      }).join("");
+
+      usersTbody.querySelectorAll(".btn-edit-admin").forEach(btn => {
+        btn.addEventListener("click", () => openEditAdminModal({
+          id: btn.dataset.id,
+          name: btn.dataset.name
+        }));
+      });
+
+      usersTbody.querySelectorAll(".btn-del-user").forEach(btn => {
+        btn.addEventListener("click", () => deleteUser(btn.dataset.id));
+      });
+
+      await loadReports();
+      const noTrans = document.getElementById("admin-no-trans");
+      const wrap = document.getElementById("admin-orders-table-wrap");
+      const countEl = document.getElementById("admin-order-count");
+      const deleteAllBtn = document.getElementById("btn-delete-all-orders");
+
+      if (reports.length === 0) {
+        noTrans.classList.remove("hidden");
+        wrap.innerHTML = "";
+        countEl.classList.add("hidden");
+        deleteAllBtn.classList.add("hidden");
+        return;
+      }
+      noTrans.classList.add("hidden");
+      countEl.textContent = reports.length + " transaksi";
+      countEl.classList.remove("hidden");
+      deleteAllBtn.classList.remove("hidden");
+      wrap.innerHTML = CleanHubUI.renderOrderTable({
+        orders: reports,
+        role: "admin",
+        onDelete: deleteOrder
+      });
+      CleanHubUI.bindOrderTable(wrap, { onDelete: deleteOrder });
+    }
+
+    document.getElementById("btn-edit-admin-save").addEventListener("click", () => {
+      saveEditAdmin().catch(e => showToast(e.message, "error"));
+    });
+    document.getElementById("btn-edit-admin-cancel").addEventListener("click", closeEditAdminModal);
+    document.getElementById("admin-edit-modal").addEventListener("click", (e) => {
+      if (e.target.id === "admin-edit-modal") closeEditAdminModal();
+    });
+    document.getElementById("btn-delete-all-orders").addEventListener("click", () => {
+      deleteAllOrders().catch(e => showToast(e.message, "error"));
+    });
+
+    checkServer();
+  </script>
+</body>
+</html>
