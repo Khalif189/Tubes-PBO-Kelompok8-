@@ -82,12 +82,17 @@ public class LaundryApiServlet extends HttpServlet {
     private void handleLogin(String body, HttpServletResponse resp) throws IOException {
         Map<String, String> data = JsonUtil.parseObject(body);
         String id = data.get("id");
-        User user = service.login(id);
-        if (user == null) {
-            sendError(resp, 401, "ID tidak ditemukan.");
+        String password = data.get("password");
+        String role = data.get("role");
+        String error = service.loginWithCredentials(id, password, role);
+        if (error != null) {
+            sendError(resp, 401, error);
             return;
         }
-        writeJson(resp, Map.of("success", true, "user", service.userToMap(user)));
+        User user = service.authenticate(id, password, role);
+        Map<String, Object> userMap = service.userToMap(user);
+        userMap.put("loginId", id == null ? "" : id.trim().toUpperCase());
+        writeJson(resp, Map.of("success", true, "user", userMap));
     }
 
     private void handleRegister(String body, HttpServletResponse resp) throws IOException {
@@ -95,9 +100,10 @@ public class LaundryApiServlet extends HttpServlet {
         String roleChoice = data.get("roleChoice");
         String id = data.get("id");
         String name = data.get("name");
+        String password = data.get("password");
         boolean isMember = JsonUtil.parseBoolean(body, "isMember");
 
-        String error = service.register(roleChoice, id, name, isMember);
+        String error = service.register(roleChoice, id, name, isMember, password);
         if (error != null) {
             sendError(resp, 400, error);
             return;
@@ -114,8 +120,15 @@ public class LaundryApiServlet extends HttpServlet {
         Map<String, String> data = JsonUtil.parseObject(body);
         String customerId = data.get("customerId");
         List<Integer> indexes = JsonUtil.parseIntArray(body, "serviceIndexes");
+        double weightKg = JsonUtil.parseDouble(body, "weightKg");
+        if (weightKg <= 0 && data.get("weightKg") != null) {
+            try {
+                weightKg = Double.parseDouble(data.get("weightKg"));
+            } catch (NumberFormatException ignored) {
+            }
+        }
 
-        CreateOrderResult result = service.createOrder(customerId, indexes);
+        CreateOrderResult result = service.createOrder(customerId, indexes, weightKg);
         if (!result.success()) {
             sendError(resp, 400, result.message());
             return;
@@ -129,6 +142,7 @@ public class LaundryApiServlet extends HttpServlet {
         payload.put("totalPrice", result.totalPrice());
         payload.put("discounted", result.discounted());
         payload.put("services", result.services());
+        payload.put("weightKg", result.weightKg());
         writeJson(resp, payload);
     }
 

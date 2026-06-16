@@ -31,7 +31,21 @@ public class LaundrySystem {
     private User login() {
         System.out.println("=== LOGIN CLEANHUB ===");
         System.out.println("Ketik ID untuk login | REG = daftar user baru | EXIT = keluar");
-        System.out.print("Input: ");
+        System.out.println("1. Customer  2. Staff  3. Admin");
+        System.out.print("Pilih role (1-3): ");
+        String roleChoice = scanner.nextLine().trim();
+        String role = switch (roleChoice) {
+            case "1" -> "Customer";
+            case "2" -> "Staff";
+            case "3" -> "Admin";
+            default -> null;
+        };
+        if (role == null) {
+            System.out.println("Role tidak valid.\n");
+            return login();
+        }
+
+        System.out.print("ID / Username: ");
         String input = scanner.nextLine().trim();
         if ("EXIT".equalsIgnoreCase(input)) {
             return null;
@@ -41,19 +55,24 @@ public class LaundrySystem {
             return login();
         }
 
-        User user;
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+
+        String error;
         try {
-            user = service.login(input);
+            error = service.loginWithCredentials(input, password, role);
         } catch (IllegalStateException e) {
             System.out.println(e.getMessage() + "\n");
             return login();
         }
-        if (user == null) {
-            System.out.println("ID tidak ditemukan.\n");
+        if (error != null) {
+            System.out.println(error + "\n");
             return login();
         }
 
-        System.out.printf("Halo, %s! (Role: %s)%n", user.getName(), user.getRole());
+        User user = service.authenticate(input, password, role);
+        System.out.printf("Selamat datang, %s!%n", input.trim().toUpperCase());
+        System.out.printf("(%s — %s)%n", user.getName(), user.getRole());
         System.out.println("======================");
         return user;
     }
@@ -73,6 +92,9 @@ public class LaundrySystem {
         System.out.print("Nama: ");
         String name = scanner.nextLine().trim();
 
+        System.out.print("Password (min 4 karakter): ");
+        String password = scanner.nextLine().trim();
+
         Boolean isMember = null;
         if ("1".equals(roleChoice)) {
             System.out.print("Member laundry? (y/n): ");
@@ -82,7 +104,7 @@ public class LaundrySystem {
                     || memberAns.equalsIgnoreCase("ya");
         }
 
-        String error = service.register(roleChoice, idRaw, name, isMember);
+        String error = service.register(roleChoice, idRaw, name, isMember, password);
         if (error != null) {
             System.out.println("[System] " + error + "\n");
             return;
@@ -118,10 +140,10 @@ public class LaundrySystem {
             System.out.println(e.getMessage());
             return;
         }
-        System.out.println("\nDaftar Layanan:");
+        System.out.println("\nDaftar Layanan (harga per kg):");
         for (Map.Entry<Integer, Service> entry : catalog.entrySet()) {
             Service svc = entry.getValue();
-            System.out.printf("%d. %s (%s)%n", entry.getKey(), svc.getServiceName(),
+            System.out.printf("%d. %s (%s / kg)%n", entry.getKey(), svc.getServiceName(),
                     service.formatRupiah(svc.getPrice()));
         }
 
@@ -135,7 +157,16 @@ public class LaundrySystem {
             }
         }
 
-        LaundryService.CreateOrderResult result = service.createOrder(customer.getId(), indexes);
+        System.out.print("Berat laundry (kg): ");
+        double weightKg;
+        try {
+            weightKg = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
+        } catch (NumberFormatException e) {
+            System.out.println("Berat tidak valid.");
+            return;
+        }
+
+        LaundryService.CreateOrderResult result = service.createOrder(customer.getId(), indexes, weightKg);
         if (!result.success()) {
             System.out.println(result.message());
             return;

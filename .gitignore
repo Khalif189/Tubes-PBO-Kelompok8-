@@ -32,3 +32,4 @@ TubesTest/src/main/resources/database.properties
 
 # Flowchart export sementara (opsional — file HTML besar dari Mermaid)
 Flowchart_*_files/
+/TubesTest/nbproject/

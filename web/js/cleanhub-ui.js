@@ -41,6 +41,22 @@ const CleanHubUI = (() => {
     }).format(amount);
   }
 
+  function isCompletedPaidOrder(status) {
+    const s = normalizeStatus(status);
+    return (s.includes("selesai") || s.includes("ready") || s.includes("siap")
+        || s.includes("complete") || s.includes("done"))
+      && !s.includes("batal") && !s.includes("cancel");
+  }
+
+  function computeAccountBalance(orders) {
+    if (!orders || orders.length === 0) {
+      return 0;
+    }
+    return orders
+      .filter(r => isCompletedPaidOrder(r.status))
+      .reduce((sum, r) => sum + (Number(r.totalPrice) || 0), 0);
+  }
+
   /**
    * Render modern order table.
    * @param {object} opts
@@ -56,14 +72,16 @@ const CleanHubUI = (() => {
       return `<div class="empty-state">Tidak ada pesanan ditemukan.</div>`;
     }
 
-    const showCustomer = role === "admin" || role === "search";
+    const showCustomerDetail = role === "admin" || role === "search";
+    const showCustomerName = role === "staff";
     const showActions = role === "staff" || role === "admin";
     const showComplaint = role === "admin";
 
     let html = `<div class="table-scroll"><table class="data-table">
       <thead><tr>
         <th>ID Pesanan</th>
-        ${showCustomer ? "<th>Customer</th>" : ""}
+        ${showCustomerName ? "<th>Nama Pemesan</th>" : ""}
+        ${showCustomerDetail ? "<th>Customer</th>" : ""}
         <th>Layanan</th>
         <th>Status</th>
         <th>Total</th>
@@ -75,7 +93,8 @@ const CleanHubUI = (() => {
       const services = (r.services || []).join(", ") || "-";
       html += `<tr class="data-row" data-order-id="${escapeHtml(r.orderId)}">
         <td><strong>${escapeHtml(r.orderId)}</strong></td>
-        ${showCustomer ? `<td><span class="cell-muted">${escapeHtml(r.customerName || "-")}</span><br><small>${escapeHtml(r.customerId || "")}</small></td>` : ""}
+        ${showCustomerName ? `<td>${escapeHtml(r.customerName || "-")}</td>` : ""}
+        ${showCustomerDetail ? `<td><span class="cell-muted">${escapeHtml(r.customerName || "-")}</span><br><small>${escapeHtml(r.customerId || "")}</small></td>` : ""}
         <td class="cell-services">${escapeHtml(services)}</td>
         <td>${statusBadge(r.status)}</td>
         <td>${formatRupiah(r.totalPrice)}</td>
@@ -139,6 +158,7 @@ const CleanHubUI = (() => {
     bindOrderTable,
     renderTrackingCard,
     formatRupiah,
+    computeAccountBalance,
     escapeHtml
   };
 })();

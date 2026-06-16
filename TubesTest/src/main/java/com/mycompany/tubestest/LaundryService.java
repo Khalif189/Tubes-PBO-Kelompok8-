@@ -1,6 +1,8 @@
 package com.mycompany.tubestest;
 
 import com.mycompany.tubestest.db.DatabaseConnection;
+import com.mycompany.tubestest.db.DatabaseMigrator;
+import com.mycompany.tubestest.db.OrderLineItem;
 import com.mycompany.tubestest.db.OrderMeta;
 import com.mycompany.tubestest.db.OrderRepository;
 import com.mycompany.tubestest.db.ServiceRepository;
@@ -38,6 +40,7 @@ public final class LaundryService {
         try {
             DatabaseConnection.getConnection().close();
             System.out.println("[DB] Terhubung ke MySQL — database cleanhub.");
+            DatabaseMigrator.migrate();
         } catch (SQLException e) {
             System.err.println("[DB] GAGAL terhubung ke MySQL!");
             System.err.println("     " + e.getMessage());
@@ -57,13 +60,77 @@ public final class LaundryService {
         }
     }
 
-    public String register(String roleChoice, String idRaw, String name, Boolean isMember) {
+    public String loginWithCredentials(String rawId, String password, String role) {
+        return loginWithCredentials(rawId, password, role, null);
+    }
+
+    public String loginWithCredentials(String rawId, String password, String role, String accountMode) {
+        if (rawId == null || rawId.isBlank()) {
+            return "ID / username wajib diisi.";
+        }
+        if (role == null || role.isBlank()) {
+            return "Pilih role login terlebih dahulu.";
+        }
+
+        String id = rawId.trim().toUpperCase();
+        try {
+            if (userRepository.findById(id) == null) {
+                return "ID tidak ditemukan.";
+            }
+            String actualRole = userRepository.getRoleById(id);
+            if (actualRole == null || !role.equals(actualRole)) {
+                return "Role tidak sesuai. Anda memilih login sebagai " + role + ".";
+            }
+
+            boolean dummyAccount = userRepository.isDummyAccount(id);
+            if (accountMode != null && !accountMode.isBlank()) {
+                String mode = accountMode.trim().toLowerCase();
+                if ("live".equals(mode)) {
+                    if (dummyAccount) {
+                        return "Akun dummy hanya untuk Mode Dummy. Kembali ke halaman awal dan pilih Mode Dummy.";
+                    }
+                    if (password == null || password.isBlank()) {
+                        return "Password wajib diisi.";
+                    }
+                } else if ("dummy".equals(mode) && !dummyAccount) {
+                    return "Akun terdaftar hanya untuk Mode Live. Daftar & login via Mode Live.";
+                }
+            }
+
+            if (!userRepository.passwordMatches(id, password)) {
+                return "Password salah.";
+            }
+            return null;
+        } catch (SQLException e) {
+            return dbMessage(e);
+        }
+    }
+
+    public User authenticate(String rawId, String password, String role) {
+        return authenticate(rawId, password, role, null);
+    }
+
+    public User authenticate(String rawId, String password, String role, String accountMode) {
+        String error = loginWithCredentials(rawId, password, role, accountMode);
+        if (error != null) {
+            return null;
+        }
+        return login(rawId);
+    }
+
+    public String register(String roleChoice, String idRaw, String name, Boolean isMember, String password) {
         if (idRaw == null || idRaw.isBlank()) {
             return "ID tidak boleh kosong.";
         }
         String id = idRaw.trim().toUpperCase();
         if (name == null || name.isBlank()) {
             return "Nama tidak boleh kosong.";
+        }
+        if (password == null || password.isBlank()) {
+            return "Password wajib diisi.";
+        }
+        if (password.length() < 4) {
+            return "Password minimal 4 karakter.";
         }
 
         try {
@@ -73,9 +140,9 @@ public final class LaundryService {
 
             String role = normalizeRoleChoice(roleChoice);
             switch (role) {
-                case "1" -> userRepository.insertCustomer(id, name.trim(), Boolean.TRUE.equals(isMember));
-                case "2" -> userRepository.insertStaff(id, name.trim());
-                case "3" -> userRepository.insertAdmin(id, name.trim());
+                case "1" -> userRepository.insertCustomer(id, name.trim(), Boolean.TRUE.equals(isMember), password);
+                case "2" -> userRepository.insertStaff(id, name.trim(), password);
+                case "3" -> userRepository.insertAdmin(id, name.trim(), password);
                 default -> {
                     return "Pilihan role tidak valid.";
                 }
@@ -92,6 +159,10 @@ public final class LaundryService {
         }
     }
 
+    public String register(String roleChoice, String idRaw, String name, Boolean isMember) {
+        return register(roleChoice, idRaw, name, isMember, UserRepository.DEFAULT_PASSWORD);
+    }
+
     public List<Map<String, Object>> getServiceCatalogJson() {
         try {
             List<Map<String, Object>> list = new ArrayList<>();
@@ -100,6 +171,8 @@ public final class LaundryService {
                 row.put("index", entry.getKey());
                 row.put("name", entry.getValue().getServiceName());
                 row.put("price", entry.getValue().getPrice());
+                row.put("unit", "kg");
+                row.put("priceLabel", formatRupiah(entry.getValue().getPrice()) + " / kg");
                 list.add(row);
             }
             return list;
@@ -108,16 +181,23 @@ public final class LaundryService {
         }
     }
 
-    public CreateOrderResult createOrder(String customerId, List<Integer> serviceIndexes) {
+    public CreateOrderResult createOrder(String customerId, List<Integer> serviceIndexes, double weightKg) {
         try {
             User user = userRepository.findById(customerId == null ? "" : customerId);
             if (!(user instanceof Customer customer)) {
                 return CreateOrderResult.fail("Customer tidak ditemukan.");
             }
 
+            if (weightKg <= 0) {
+                return CreateOrderResult.fail("Berat laundry harus lebih dari 0 kg.");
+            }
+            if (weightKg > 500) {
+                return CreateOrderResult.fail("Berat maksimal 500 kg per pesanan.");
+            }
+
             Map<Integer, Service> catalog = serviceRepository.findAll();
             Order order = new Order(orderRepository.nextOrderId());
-            List<Integer> validIndexes = new ArrayList<>();
+            List<OrderLineItem> lines = new ArrayList<>();
 
             if (serviceIndexes != null) {
                 for (Integer index : serviceIndexes) {
@@ -126,8 +206,10 @@ public final class LaundryService {
                     }
                     Service selected = catalog.get(index);
                     if (selected != null) {
-                        order.addService(selected);
-                        validIndexes.add(index);
+                        double linePrice = selected.getPrice() * weightKg;
+                        String displayName = selected.getServiceName() + " (" + formatWeight(weightKg) + " kg)";
+                        order.addService(new Service(displayName, linePrice));
+                        lines.add(new OrderLineItem(index, weightKg, linePrice));
                     }
                 }
             }
@@ -147,7 +229,7 @@ public final class LaundryService {
                     customer.getId(),
                     finalPrice,
                     status,
-                    validIndexes);
+                    lines);
 
             return CreateOrderResult.ok(
                     order.getOrderId(),
@@ -155,7 +237,8 @@ public final class LaundryService {
                     subtotal,
                     finalPrice,
                     payment.validateStatus(),
-                    serviceNames(order));
+                    serviceNames(order),
+                    weightKg);
         } catch (SQLException e) {
             return CreateOrderResult.fail(dbMessage(e));
         }
@@ -303,9 +386,13 @@ public final class LaundryService {
     }
 
     public List<Map<String, Object>> getUsersJson() {
+        return getUsersJson(null);
+    }
+
+    public List<Map<String, Object>> getUsersJson(String accountKind) {
         try {
             List<Map<String, Object>> list = new ArrayList<>();
-            for (User user : userRepository.findAll()) {
+            for (User user : userRepository.findAllByAccountKind(accountKind)) {
                 list.add(userToMap(user));
             }
             return list;
@@ -420,6 +507,13 @@ public final class LaundryService {
         return "Koneksi database gagal. Pastikan MySQL XAMPP aktif dan database cleanhub sudah di-import. (" + e.getMessage() + ")";
     }
 
+    private static String formatWeight(double weightKg) {
+        if (Math.abs(weightKg - Math.rint(weightKg)) < 0.001) {
+            return String.valueOf((long) Math.rint(weightKg));
+        }
+        return String.format(Locale.US, "%.2f", weightKg).replaceAll("0+$", "").replaceAll("\\.$", "");
+    }
+
     public record CreateOrderResult(
             boolean success,
             String message,
@@ -428,15 +522,17 @@ public final class LaundryService {
             double subtotal,
             double totalPrice,
             boolean discounted,
-            List<String> services) {
+            List<String> services,
+            double weightKg) {
 
         static CreateOrderResult ok(String orderId, String status, double subtotal,
-                                    double totalPrice, boolean discounted, List<String> services) {
-            return new CreateOrderResult(true, null, orderId, status, subtotal, totalPrice, discounted, services);
+                                    double totalPrice, boolean discounted, List<String> services,
+                                    double weightKg) {
+            return new CreateOrderResult(true, null, orderId, status, subtotal, totalPrice, discounted, services, weightKg);
         }
 
         static CreateOrderResult fail(String message) {
-            return new CreateOrderResult(false, message, null, null, 0, 0, false, List.of());
+            return new CreateOrderResult(false, message, null, null, 0, 0, false, List.of(), 0);
         }
     }
 

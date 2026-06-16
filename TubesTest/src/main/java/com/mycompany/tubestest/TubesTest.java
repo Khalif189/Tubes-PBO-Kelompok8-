@@ -1,6 +1,10 @@
 package com.mycompany.tubestest;
 
 import com.mycompany.tubestest.web.CleanHubWebServer;
+import com.mycompany.tubestest.web.PortHelper;
+
+import java.awt.Desktop;
+import java.net.URI;
 
 /**
  * Main class — menjalankan web (default) dan/atau mode konsol.
@@ -44,7 +48,25 @@ public class TubesTest {
         }
 
         if (runWeb) {
-            CleanHubWebServer.start(port);
+            PortHelper.tryFreePort(port);
+            try {
+                CleanHubWebServer.start(port);
+                String url = "http://localhost:" + port + "/";
+                System.out.println();
+                System.out.println("=== CleanHub siap ===");
+                System.out.println("Buka: " + url);
+                System.out.println("(NetBeans: biarkan proses ini jalan, jangan tutup Output)");
+                openBrowser(url);
+            } catch (Exception e) {
+                System.err.println("[ERROR] Gagal menjalankan web server: " + e.getMessage());
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    System.err.println("        " + e.getCause().getMessage());
+                }
+                System.err.println("        → Pastikan XAMPP MySQL ON");
+                System.err.println("        → Stop Tomcat di XAMPP jika port " + port + " bentrok");
+                System.err.println("        → Atau jalankan dengan argumen: --port 9090");
+                return;
+            }
         }
 
         if (runConsole) {
@@ -68,5 +90,15 @@ public class TubesTest {
             }
         }
         return false;
+    }
+
+    private static void openBrowser(String url) {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(URI.create(url));
+            }
+        } catch (Exception e) {
+            System.out.println("Buka browser manual: " + url);
+        }
     }
 }

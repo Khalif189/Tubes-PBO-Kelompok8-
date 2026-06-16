@@ -56,7 +56,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-copy /Y "%~dp0src\main\resources\database.properties" "%OUT%\" >nul
+if not exist "%~dp0src\main\resources\database.properties" (
+    copy /Y "%~dp0src\main\resources\database.properties.example" "%~dp0src\main\resources\database.properties" >nul
+)
+if exist "%~dp0src\main\resources\database.properties" (
+    copy /Y "%~dp0src\main\resources\database.properties" "%OUT%\" >nul
+) else (
+    copy /Y "%~dp0src\main\resources\database.properties.example" "%OUT%\database.properties" >nul
+)
 
 echo.
 echo === Server jalan ===

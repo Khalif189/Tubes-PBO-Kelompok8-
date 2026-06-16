@@ -43,7 +43,17 @@ public class LaundryApiHandler implements HttpHandler {
         } catch (IllegalStateException ex) {
             sendJson(exchange, 503, Map.of("success", false, "message", ex.getMessage()));
         } catch (Exception ex) {
+            ex.printStackTrace();
             sendJson(exchange, 500, Map.of("success", false, "message", String.valueOf(ex.getMessage())));
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            try {
+                sendJson(exchange, 500, Map.of(
+                        "success", false,
+                        "message", "Server error: " + ex.getClass().getSimpleName()
+                                + " — restart run.bat / NetBeans Run"));
+            } catch (IOException ignored) {
+            }
         }
     }
 
@@ -51,7 +61,8 @@ public class LaundryApiHandler implements HttpHandler {
         switch (path) {
             case "/health" -> sendJson(exchange, 200, Map.of("ok", true, "app", "CleanHub"));
             case "/services" -> sendJson(exchange, 200, Map.of("services", service.getServiceCatalogJson()));
-            case "/users" -> sendJson(exchange, 200, Map.of("users", service.getUsersJson()));
+            case "/users" -> sendJson(exchange, 200, Map.of(
+                    "users", service.getUsersJson(queryParam(exchange, "kind"))));
             case "/orders" -> sendJson(exchange, 200, Map.of("reports", service.getReportsJson()));
             case "/search" -> handleSearch(exchange);
             case "/admin/users" -> sendJson(exchange, 200, Map.of("users", service.getUsersJson()));
@@ -65,11 +76,24 @@ public class LaundryApiHandler implements HttpHandler {
 
         switch (path) {
             case "/login" -> {
-                User user = service.login(data.get("id"));
-                if (user == null) {
-                    sendJson(exchange, 401, Map.of("success", false, "message", "ID tidak ditemukan."));
+                String id = data.get("id");
+                String password = data.get("password");
+                String role = data.get("role");
+                String accountMode = JsonUtil.getString(data, "accountMode", body);
+                String error = service.loginWithCredentials(id, password, role, accountMode);
+                if (error != null) {
+                    sendJson(exchange, 401, Map.of("success", false, "message", error));
                 } else {
-                    sendJson(exchange, 200, Map.of("success", true, "user", service.userToMap(user)));
+                    User user = service.authenticate(id, password, role, accountMode);
+                    if (user == null) {
+                        sendJson(exchange, 500, Map.of(
+                                "success", false,
+                                "message", "Login gagal memuat data user. Cek koneksi MySQL."));
+                    } else {
+                        Map<String, Object> userMap = service.userToMap(user);
+                        userMap.put("loginId", id == null ? "" : id.trim().toUpperCase());
+                        sendJson(exchange, 200, Map.of("success", true, "user", userMap));
+                    }
                 }
             }
             case "/register" -> {
@@ -79,7 +103,8 @@ public class LaundryApiHandler implements HttpHandler {
                 }
                 String id = JsonUtil.getString(data, "id", body);
                 String name = JsonUtil.getString(data, "name", body);
-                String error = service.register(roleChoice, id, name, JsonUtil.parseBoolean(body, "isMember"));
+                String password = JsonUtil.getString(data, "password", body);
+                String error = service.register(roleChoice, id, name, JsonUtil.parseBoolean(body, "isMember"), password);
                 if (error != null) {
                     sendJson(exchange, 400, Map.of("success", false, "message", error));
                 } else {
@@ -125,8 +150,15 @@ public class LaundryApiHandler implements HttpHandler {
     }
 
     private void handleCreateOrder(String body, Map<String, String> data, HttpExchange exchange) throws IOException {
+        double weightKg = JsonUtil.parseDouble(body, "weightKg");
+        if (weightKg <= 0 && data.get("weightKg") != null) {
+            try {
+                weightKg = Double.parseDouble(data.get("weightKg"));
+            } catch (NumberFormatException ignored) {
+            }
+        }
         CreateOrderResult result = service.createOrder(
-                data.get("customerId"), JsonUtil.parseIntArray(body, "serviceIndexes"));
+                data.get("customerId"), JsonUtil.parseIntArray(body, "serviceIndexes"), weightKg);
         if (!result.success()) {
             sendJson(exchange, 400, Map.of("success", false, "message", result.message()));
             return;
@@ -139,6 +171,7 @@ public class LaundryApiHandler implements HttpHandler {
         payload.put("totalPrice", result.totalPrice());
         payload.put("discounted", result.discounted());
         payload.put("services", result.services());
+        payload.put("weightKg", result.weightKg());
         sendJson(exchange, 200, payload);
     }
 

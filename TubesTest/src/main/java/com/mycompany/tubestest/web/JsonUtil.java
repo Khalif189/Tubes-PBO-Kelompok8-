@@ -138,4 +138,20 @@ public final class JsonUtil {
         Matcher matcher = pattern.matcher(json == null ? "" : json);
         return matcher.find() && "true".equalsIgnoreCase(matcher.group(1));
     }
+
+    public static double parseDouble(String json, String key) {
+        if (json == null || json.isBlank()) {
+            return 0;
+        }
+        Pattern pattern = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*(-?\\d+(?:\\.\\d+)?)");
+        Matcher matcher = pattern.matcher(json);
+        if (!matcher.find()) {
+            return 0;
+        }
+        try {
+            return Double.parseDouble(matcher.group(1));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
 }

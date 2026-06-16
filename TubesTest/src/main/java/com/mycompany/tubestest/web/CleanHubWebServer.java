@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
 
 /**
  * Server web — satu router untuk /api/* dan file statis web/.
@@ -16,27 +17,43 @@ import java.nio.file.Paths;
 public final class CleanHubWebServer {
 
     private static HttpServer server;
-    private static final LaundryApiHandler API_HANDLER = new LaundryApiHandler();
+    private static LaundryApiHandler apiHandler;
 
     private CleanHubWebServer() {
+    }
+
+    private static LaundryApiHandler handler() {
+        if (apiHandler == null) {
+            apiHandler = new LaundryApiHandler();
+        }
+        return apiHandler;
     }
 
     public static void start(int port) throws IOException {
         stop();
 
         Path webRoot = resolveWebRoot();
-        server = HttpServer.create(new InetSocketAddress(port), 0);
+        try {
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("bind")) {
+                throw new IOException(
+                        "Port " + port + " sudah dipakai. Tutup server lama (run.bat / Maven) atau jalankan dengan --port 9090",
+                        e);
+            }
+            throw e;
+        }
 
         server.createContext("/", exchange -> {
             String path = exchange.getRequestURI().getPath();
             if (path != null && ("/api".equals(path) || path.startsWith("/api/"))) {
-                API_HANDLER.handle(exchange);
+                handler().handle(exchange);
             } else {
                 serveStatic(webRoot, exchange);
             }
         });
 
-        server.setExecutor(null);
+        server.setExecutor(Executors.newCachedThreadPool());
         server.start();
 
         System.out.println("CleanHub Web: http://localhost:" + port + "/");

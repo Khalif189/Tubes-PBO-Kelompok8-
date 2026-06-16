@@ -6,10 +6,12 @@
             <packaging>jar</packaging>
         </packagings>
         <goals>
+            <goal>compile</goal>
             <goal>exec:java</goal>
         </goals>
         <properties>
             <exec.workingdir>${project.basedir}/..</exec.workingdir>
+            <exec.mainClass>com.mycompany.tubestest.TubesTest</exec.mainClass>
         </properties>
     </action>
     <action>
@@ -18,10 +20,21 @@
             <packaging>jar</packaging>
         </packagings>
         <goals>
+            <goal>compile</goal>
             <goal>exec:java</goal>
         </goals>
         <properties>
             <exec.workingdir>${project.basedir}/..</exec.workingdir>
+            <exec.mainClass>com.mycompany.tubestest.TubesTest</exec.mainClass>
         </properties>
+    </action>
+    <action>
+        <actionName>build</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>compile</goal>
+        </goals>
     </action>
 </actions>

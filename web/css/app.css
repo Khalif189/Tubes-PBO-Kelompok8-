@@ -19,7 +19,7 @@
 }
 
 body {
-  background: linear-gradient(160deg, var(--bg) 0%, #ecfeff 40%, var(--bg-deep) 100%) !important;
+  background: var(--bg) !important;
   color: var(--text) !important;
 }
 

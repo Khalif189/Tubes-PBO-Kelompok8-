@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class OrderRepository {
 
@@ -80,12 +81,15 @@ public class OrderRepository {
     }
 
     public void insertOrder(String orderId, String customerId, double totalPrice,
-                            String status, List<Integer> serviceIndexes) throws SQLException {
+                            String status, List<OrderLineItem> lines) throws SQLException {
         String insertOrder = """
                 INSERT INTO orders (order_id, customer_id, total_price, status, complaint)
                 VALUES (?, ?, ?, ?, '-')
                 """;
-        String insertLine = "INSERT INTO order_services (order_id, service_index) VALUES (?, ?)";
+        String insertLine = """
+                INSERT INTO order_services (order_id, service_index, weight_kg, line_price)
+                VALUES (?, ?, ?, ?)
+                """;
 
         Connection conn = DatabaseConnection.getConnection();
         try {
@@ -100,9 +104,11 @@ public class OrderRepository {
             }
 
             try (PreparedStatement ps = conn.prepareStatement(insertLine)) {
-                for (Integer index : serviceIndexes) {
+                for (OrderLineItem line : lines) {
                     ps.setString(1, orderId);
-                    ps.setInt(2, index);
+                    ps.setInt(2, line.serviceIndex());
+                    ps.setDouble(3, line.weightKg());
+                    ps.setDouble(4, line.linePrice());
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -195,7 +201,7 @@ public class OrderRepository {
 
     private void loadOrderServices(Connection conn, String orderId, Order order) throws SQLException {
         String sql = """
-                SELECT s.service_name, s.price
+                SELECT s.service_name, os.weight_kg, os.line_price, s.price AS catalog_price
                 FROM order_services os
                 JOIN services s ON s.service_index = os.service_index
                 WHERE os.order_id = ?
@@ -205,9 +211,25 @@ public class OrderRepository {
             ps.setString(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    order.addService(new Service(rs.getString("service_name"), rs.getDouble("price")));
+                    double weightKg = rs.getDouble("weight_kg");
+                    double linePrice = rs.getDouble("line_price");
+                    if (rs.wasNull() || linePrice <= 0) {
+                        linePrice = rs.getDouble("catalog_price") * (weightKg > 0 ? weightKg : 1);
+                    }
+                    String name = rs.getString("service_name");
+                    if (weightKg > 0) {
+                        name = name + " (" + formatWeight(weightKg) + " kg)";
+                    }
+                    order.addService(new Service(name, linePrice));
                 }
             }
         }
+    }
+
+    private static String formatWeight(double weightKg) {
+        if (Math.abs(weightKg - Math.rint(weightKg)) < 0.001) {
+            return String.valueOf((long) Math.rint(weightKg));
+        }
+        return String.format(Locale.US, "%.2f", weightKg).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 }
